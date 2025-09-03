@@ -23,9 +23,6 @@ if "clear_input" not in st.session_state:
 if "show_sidebar" not in st.session_state:
     st.session_state.show_sidebar = False
 
-if "last_refresh" not in st.session_state:
-    st.session_state.last_refresh = datetime.now()
-
 def get_ideas_by_group(group_id):
     cursor.execute("SELECT idea FROM ideas WHERE group_id = ?", (group_id,))
     return [row[0] for row in cursor.fetchall()]
@@ -111,13 +108,6 @@ st.markdown("""
 # Tạo sidebar
 mode = st.sidebar.selectbox("Chọn chế độ", ["Nhập ý kiến (Nhóm)", "Trình chiếu (Tổng hợp)"])
 
-# Kiểm tra xem đã đến lúc refresh chưa
-current_time = datetime.now()
-time_diff = (current_time - st.session_state.last_refresh).total_seconds()
-if time_diff >= 10 and mode == "Trình chiếu (Tổng hợp)":
-    st.session_state.last_refresh = current_time
-    st.rerun()
-
 if mode == "Nhập ý kiến (Nhóm)":
     st.header("Nhập ý kiến của nhóm của bạn")
     
@@ -197,6 +187,19 @@ elif mode == "Trình chiếu (Tổng hợp)":
             conn.commit()
             st.success("Đã xóa toàn bộ dữ liệu!")
             st.rerun()
+
+    # Thêm JavaScript để tự động refresh trang mỗi 10 giây
+    st.components.v1.html(
+        """
+        <script>
+            function refreshPage() {
+                location.reload();
+            }
+            setTimeout(refreshPage, 10000);
+        </script>
+        """,
+        height=0
+    )
 
 # Thêm dữ liệu demo trong sidebar
 if st.sidebar.checkbox("Thêm dữ liệu demo"):
