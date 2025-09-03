@@ -102,6 +102,12 @@ st.markdown("""
         text-align: right;
         margin-top: 10px;
     }
+    .button-container {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 20px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -179,14 +185,19 @@ elif mode == "Trình chiếu (Tổng hợp)":
     current_time = datetime.now()
     st.markdown(f'<div class="last-update">Cập nhật lần cuối: {current_time.strftime("%H:%M:%S")}</div>', unsafe_allow_html=True)
 
-    # Căn giữa nút xóa dữ liệu
-    col1, col2, col3 = st.columns([1, 1, 1])
+    # Tạo hai nút: Làm mới và Xóa dữ liệu
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("Xóa toàn bộ dữ liệu", use_container_width=True):
-            cursor.execute("DELETE FROM ideas")  # Xóa toàn bộ dữ liệu trong bảng ideas
-            conn.commit()
-            st.success("Đã xóa toàn bộ dữ liệu!")
-            st.rerun()
+        col_a, col_b = st.columns(2)
+        with col_a:
+            if st.button("Làm mới dữ liệu", use_container_width=True):
+                st.rerun()
+        with col_b:
+            if st.button("Xóa toàn bộ dữ liệu", use_container_width=True):
+                cursor.execute("DELETE FROM ideas")  # Xóa toàn bộ dữ liệu trong bảng ideas
+                conn.commit()
+                st.success("Đã xóa toàn bộ dữ liệu!")
+                st.rerun()
 
     # Thêm JavaScript để tự động refresh trang mỗi 10 giây
     st.components.v1.html(
