@@ -23,6 +23,9 @@ if "clear_input" not in st.session_state:
 if "show_sidebar" not in st.session_state:
     st.session_state.show_sidebar = False
 
+if "last_refresh" not in st.session_state:
+    st.session_state.last_refresh = datetime.now()
+
 def get_ideas_by_group(group_id):
     cursor.execute("SELECT idea FROM ideas WHERE group_id = ?", (group_id,))
     return [row[0] for row in cursor.fetchall()]
@@ -108,13 +111,20 @@ st.markdown("""
 # Tạo sidebar
 mode = st.sidebar.selectbox("Chọn chế độ", ["Nhập ý kiến (Nhóm)", "Trình chiếu (Tổng hợp)"])
 
+# Kiểm tra xem đã đến lúc refresh chưa
+current_time = datetime.now()
+time_diff = (current_time - st.session_state.last_refresh).total_seconds()
+if time_diff >= 10 and mode == "Trình chiếu (Tổng hợp)":
+    st.session_state.last_refresh = current_time
+    st.rerun()
+
 if mode == "Nhập ý kiến (Nhóm)":
     st.header("Nhập ý kiến của nhóm của bạn")
     
     col1, col2 = st.columns([1, 2])
     
     with col1:
-        group = st.selectbox("Chọn nhóm", [1, 2, 3, 4])
+        group = st.selectbox("Chọn nhóm", [1, 2, 3, 4, 5])
     
     idea_key = "idea_input" + str(time.time()) if st.session_state.clear_input else "idea_input"
     idea = st.text_area("Nhập ý kiến", height=150, key=idea_key)
@@ -143,6 +153,7 @@ elif mode == "Trình chiếu (Tổng hợp)":
     ideas2 = get_ideas_by_group(2)
     ideas3 = get_ideas_by_group(3)
     ideas4 = get_ideas_by_group(4)
+    ideas5 = get_ideas_by_group(5)
     all_ideas = get_all_unique_ideas()
     
     container = st.container()
@@ -150,7 +161,7 @@ elif mode == "Trình chiếu (Tổng hợp)":
     # Tạo khoảng trống ở trên
     container.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
     
-    # Hàng 1: Nhóm 1 và Nhóm 2
+    # Hàng 1: Nhóm 1, Nhóm 2 và Nhóm 5
     row1 = container.columns([1, 2, 1])
     
     with row1[0]:
@@ -162,20 +173,23 @@ elif mode == "Trình chiếu (Tổng hợp)":
     with row1[1]:
         display_ideas_box("Tổng hợp sẽ hiển thị ở đây...", all_ideas, is_center=True)
     
-    container.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
+    container.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
     
-    row2 = container.columns([1, 2, 1])
+    row2 = container.columns([1, 1, 1])
     
     with row2[0]:
         display_ideas_box("Nhóm 3...", ideas3)
         
-    with row2[2]:
+    with row2[1]:
         display_ideas_box("Nhóm 4...", ideas4)
+        
+    with row2[2]:
+        display_ideas_box("Nhóm 5...", ideas5)
 
     current_time = datetime.now()
     st.markdown(f'<div class="last-update">Cập nhật lần cuối: {current_time.strftime("%H:%M:%S")}</div>', unsafe_allow_html=True)
 
-    # Căn giữa nút refresh thủ công và nút xóa dữ liệu
+    # Căn giữa nút xóa dữ liệu
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
         if st.button("Xóa toàn bộ dữ liệu", use_container_width=True):
@@ -184,22 +198,10 @@ elif mode == "Trình chiếu (Tổng hợp)":
             st.success("Đã xóa toàn bộ dữ liệu!")
             st.rerun()
 
-    # Thêm script JavaScript để tự động refresh trang mỗi 10 giây
-    st.markdown(
-        """
-        <script>
-            setTimeout(function(){
-                window.location.reload();
-            }, 10000);
-        </script>
-        """,
-        unsafe_allow_html=True
-    )
-
 # Thêm dữ liệu demo trong sidebar
 if st.sidebar.checkbox("Thêm dữ liệu demo"):
     demo_idea = st.sidebar.text_area("Nhập ý tưởng mẫu", height=100)
-    demo_group = st.sidebar.selectbox("Chọn nhóm mẫu", [1, 2, 3, 4])
+    demo_group = st.sidebar.selectbox("Chọn nhóm mẫu", [1, 2, 3, 4, 5])
     
     if st.sidebar.button("Thêm ý tưởng mẫu"):
         if demo_idea:
